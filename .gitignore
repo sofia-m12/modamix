@@ -1,0 +1,21 @@
+.env
+.env.*
+!.env.example
+node_modules/
+.next/
+out/
+npm-debug.log*
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+*.egg-info/
+.DS_Store
+.idea/
+.vscode/
+coverage/
+
+# Local Codex/agent skills
+.agents/
+skills-lock.json
