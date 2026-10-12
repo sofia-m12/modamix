@@ -16,6 +16,20 @@ type ImportResponse = {
   product: ImportedProduct;
 };
 
+function isImportResponse(value: unknown): value is ImportResponse {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const response = value as Partial<ImportResponse>;
+  return (
+    (response.status === "complete" || response.status === "partial" || response.status === "failed") &&
+    typeof response.product === "object" &&
+    response.product !== null &&
+    typeof response.product.source_url === "string"
+  );
+}
+
 export function ProductImportForm() {
   const [message, setMessage] = useState("");
   const [preview, setPreview] = useState<ImportResponse | null>(null);
@@ -50,7 +64,12 @@ export function ProductImportForm() {
         return;
       }
 
-      const imported = payload as ImportResponse;
+      if (!isImportResponse(payload)) {
+        setMessage("ModaMix received an outdated import response. Restart the backend and try again.");
+        return;
+      }
+
+      const imported = payload;
       setPreview(imported);
       setMessage(
         imported.status === "failed"
@@ -83,7 +102,7 @@ export function ProductImportForm() {
       {message && <p aria-live="polite">{message}</p>}
       {preview?.status !== "failed" && preview && (
         <article className="product-preview" aria-label="Imported reference product">
-          {preview.product.images?.[0] ? (
+          {preview.product?.images?.[0] ? (
             <img src={preview.product.images[0]} alt={preview.product.title ?? "Imported product"} />
           ) : (
             <div className="image-placeholder">No product image available</div>
