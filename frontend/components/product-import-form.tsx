@@ -1,7 +1,149 @@
 "use client";
+
 import { FormEvent, useState } from "react";
+
+type ImportedProduct = {
+  source_url: string;
+  title?: string;
+  images?: string[];
+  price?: string;
+  currency?: string;
+  provenance?: Record<string, "structured_page" | "visual_inference">;
+};
+
+type ImportResponse = {
+  status: "complete" | "partial" | "failed";
+  product: ImportedProduct;
+};
+
+function provenanceLabel(
+  field: string,
+  provenance: ImportedProduct["provenance"],
+) {
+  const source = provenance?.[field];
+  if (source === "structured_page") {
+    return "Retailer page";
+  }
+  if (source === "visual_inference") {
+    return "Image analysis";
+  }
+  return "Unknown";
+}
+
+function isImportResponse(value: unknown): value is ImportResponse {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const response = value as Partial<ImportResponse>;
+  return (
+    (response.status === "complete" || response.status === "partial" || response.status === "failed") &&
+    typeof response.product === "object" &&
+    response.product !== null &&
+    typeof response.product.source_url === "string"
+  );
+}
+
 export function ProductImportForm() {
   const [message, setMessage] = useState("");
-  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setMessage("Your reference item is ready for import. Backend connection comes next."); }
-  return <form onSubmit={submit}><label htmlFor="url">Retail product URL</label><input id="url" name="url" type="url" placeholder="https://retailer.com/product" /><textarea name="changes" placeholder="For example: Keep the cropped fit and forest-green color; change to a smaller collar, no logo, under $100." /><button type="submit">Find my match</button>{message && <p aria-live="polite">{message}</p>}</form>;
+  const [preview, setPreview] = useState<ImportResponse | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const sourceUrl = formData.get("url");
+
+    setMessage("");
+    setPreview(null);
+    setIsImporting(true);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/imports`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ source_url: sourceUrl }),
+        },
+      );
+      const payload = await response.json();
+
+      if (!response.ok) {
+        setMessage(
+          typeof payload.detail === "string"
+            ? payload.detail
+            : "ModaMix could not import that product URL.",
+        );
+        return;
+      }
+
+      if (!isImportResponse(payload)) {
+        setMessage("ModaMix received an outdated import response. Restart the backend and try again.");
+        return;
+      }
+
+      const imported = payload;
+      setPreview(imported);
+      setMessage(
+        imported.status === "failed"
+          ? "ModaMix could not find a usable product preview at that URL."
+          : "Review the imported Reference Product before continuing.",
+      );
+    } catch {
+      setMessage("ModaMix could not reach the import service. Please try again.");
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
+  return (
+    <section className="import-panel" aria-labelledby="import-heading">
+      <h2 id="import-heading">Start with a product you love</h2>
+      <form onSubmit={submit}>
+        <label htmlFor="url">Retail product URL</label>
+        <input
+          id="url"
+          name="url"
+          type="url"
+          placeholder="https://retailer.com/products/jacket"
+          required
+        />
+        <button type="submit" disabled={isImporting}>
+          {isImporting ? "Importing…" : "Import product"}
+        </button>
+      </form>
+      {message && <p aria-live="polite">{message}</p>}
+      {preview?.status !== "failed" && preview && (
+        <article className="product-preview" aria-label="Imported reference product">
+          {preview.product?.images?.[0] ? (
+            <img src={preview.product.images[0]} alt={preview.product.title ?? "Imported product"} />
+          ) : (
+            <div className="image-placeholder">No product image available</div>
+          )}
+          <div>
+            <p className="eyebrow">REFERENCE PRODUCT · {preview.status}</p>
+            <h3>{preview.product.title ?? "Untitled product"}</h3>
+            <p className="provenance">
+              Title source: {provenanceLabel("title", preview.product.provenance)} · Image source:{" "}
+              {provenanceLabel("images", preview.product.provenance)}
+            </p>
+            {preview.product.price && (
+              <p>
+                {preview.product.currency ? `${preview.product.currency} ` : ""}
+                {preview.product.price}
+              </p>
+            )}
+            <p className="provenance">
+              Price source: {provenanceLabel("price", preview.product.provenance)} · Currency source:{" "}
+              {provenanceLabel("currency", preview.product.provenance)}
+            </p>
+            <a href={preview.product.source_url} target="_blank" rel="noreferrer">
+              View source product
+            </a>
+          </div>
+        </article>
+      )}
+    </section>
+  );
 }
