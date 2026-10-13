@@ -1,0 +1,30 @@
+name: Pull request size
+
+on:
+  pull_request:
+
+jobs:
+  enforce-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pullRequest } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+
+            const changedLines = pullRequest.additions + pullRequest.deletions;
+            const hasException = pullRequest.labels.some(
+              (label) => label.name === "large-refactor",
+            );
+
+            if (changedLines > 400 && !hasException) {
+              core.setFailed(
+                `This PR changes ${changedLines} lines. Keep behavior-changing ` +
+                  "PRs at 400 lines or fewer, or apply the large-refactor label " +
+                  "with an explanation.",
+              );
+            }
