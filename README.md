@@ -6,8 +6,8 @@ ModaMix is a fashion search web app that finds similar clothing based on product
 
 ## MVP flow
 
-1. Paste a retail URL or upload a reference image.
-2. Confirm the imported item.
+1. Paste a direct retail product URL.
+2. Confirm the imported Reference Product and Reference Image.
 3. Describe what to keep, change, or exclude.
 4. Browse ranked, real-product alternatives with match explanations.
 
@@ -25,4 +25,4 @@ Backend: `cd backend && python -m venv .venv && source .venv/bin/activate && pip
 
 Frontend: `cd frontend && npm install && npm run dev`
 
-The initial category is jackets. URL imports are best-effort; unknown product data remains unknown and image upload is the fallback.
+The initial category is jackets. URL imports are best-effort; unknown product data remains unknown, and image upload is available only as an import-recovery fallback.
