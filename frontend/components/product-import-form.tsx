@@ -8,13 +8,27 @@ type ImportedProduct = {
   images?: string[];
   price?: string;
   currency?: string;
-  provenance?: Record<string, "structured_page">;
+  provenance?: Record<string, "structured_page" | "visual_inference">;
 };
 
 type ImportResponse = {
   status: "complete" | "partial" | "failed";
   product: ImportedProduct;
 };
+
+function provenanceLabel(
+  field: string,
+  provenance: ImportedProduct["provenance"],
+) {
+  const source = provenance?.[field];
+  if (source === "structured_page") {
+    return "Retailer page";
+  }
+  if (source === "visual_inference") {
+    return "Image analysis";
+  }
+  return "Unknown";
+}
 
 function isImportResponse(value: unknown): value is ImportResponse {
   if (typeof value !== "object" || value === null) {
@@ -110,19 +124,23 @@ export function ProductImportForm() {
           <div>
             <p className="eyebrow">REFERENCE PRODUCT · {preview.status}</p>
             <h3>{preview.product.title ?? "Untitled product"}</h3>
+            <p className="provenance">
+              Title source: {provenanceLabel("title", preview.product.provenance)} · Image source:{" "}
+              {provenanceLabel("images", preview.product.provenance)}
+            </p>
             {preview.product.price && (
               <p>
-                {preview.product.currency ?? "USD"} {preview.product.price}
+                {preview.product.currency ? `${preview.product.currency} ` : ""}
+                {preview.product.price}
               </p>
             )}
+            <p className="provenance">
+              Price source: {provenanceLabel("price", preview.product.provenance)} · Currency source:{" "}
+              {provenanceLabel("currency", preview.product.provenance)}
+            </p>
             <a href={preview.product.source_url} target="_blank" rel="noreferrer">
               View source product
             </a>
-            <p className="provenance">
-              {preview.product.provenance
-                ? "Preview details came from structured product metadata."
-                : "Some product details could not be imported."}
-            </p>
           </div>
         </article>
       )}

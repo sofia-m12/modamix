@@ -3,7 +3,7 @@ import pytest
 
 from app.api.routes import imports
 from app.main import app
-from app.services import product_importer
+from app.services import product_importer, product_url, retail_page
 
 
 @pytest.fixture(autouse=True)
@@ -27,6 +27,7 @@ def test_imports_a_direct_product_url_as_a_reference_product(monkeypatch) -> Non
                     "title": "structured_page",
                     "images": "structured_page",
                     "price": "structured_page",
+                    "currency": "structured_page",
                 },
             },
         },
@@ -51,31 +52,45 @@ def test_imports_a_direct_product_url_as_a_reference_product(monkeypatch) -> Non
                 "title": "structured_page",
                 "images": "structured_page",
                 "price": "structured_page",
+                "currency": "structured_page",
             },
         },
     }
 
 
 @pytest.mark.parametrize(
-    "source_url",
+    ("source_url", "detail"),
     [
-        "http://127.0.0.1/products/jacket",
-        "http://100.64.0.1/products/jacket",
-        "https://retailer.example/collections/jackets",
-        "https://retailer.example/search?q=jacket",
-        "https://www.instagram.com/p/jacket-post/",
+        ("http://127.0.0.1/products/jacket", "Private or non-public IP addresses are not allowed."),
+        ("http://100.64.0.1/products/jacket", "Private or non-public IP addresses are not allowed."),
+        (
+            "https://retailer.example/collections/jackets",
+            "Submit a direct product page URL, not a category, search, or account page.",
+        ),
+        (
+            "https://retailer.example/search?q=jacket",
+            "Submit a direct product page URL, not a category, search, or account page.",
+        ),
+        (
+            "https://www.instagram.com/p/jacket-post/",
+            "Social media links are not supported; submit a direct product URL.",
+        ),
+        (
+            "https://rstyle.me/products/jacket",
+            "Affiliate links are not supported; submit a direct product URL.",
+        ),
     ],
 )
-def test_rejects_unsafe_or_non_product_urls(source_url: str) -> None:
+def test_rejects_unsafe_or_non_product_urls(source_url: str, detail: str) -> None:
     response = TestClient(app).post("/api/imports", json={"source_url": source_url})
 
     assert response.status_code == 422
-    assert response.json()["detail"] == "Submit a public direct product URL."
+    assert response.json()["detail"] == detail
 
 
 def test_rejects_a_product_url_that_resolves_to_a_private_address(monkeypatch) -> None:
     monkeypatch.setattr(
-        product_importer,
+        product_url,
         "resolve_host_addresses",
         lambda hostname: ["127.0.0.1"],
         raising=False,
@@ -87,7 +102,7 @@ def test_rejects_a_product_url_that_resolves_to_a_private_address(monkeypatch) -
     )
 
     assert response.status_code == 422
-    assert response.json()["detail"] == "Submit a public direct product URL."
+    assert response.json()["detail"] == "The product URL host does not resolve to a public address."
 
 
 def test_extracts_a_reference_product_from_structured_page_metadata(monkeypatch) -> None:
@@ -128,6 +143,7 @@ def test_extracts_a_reference_product_from_structured_page_metadata(monkeypatch)
                 "title": "structured_page",
                 "images": "structured_page",
                 "price": "structured_page",
+                "currency": "structured_page",
             },
         },
     }
@@ -167,6 +183,21 @@ def test_preserves_unknown_product_facts_in_a_partial_import(monkeypatch) -> Non
                 "images": "structured_page",
             },
         },
+    }
+
+
+def test_returns_a_failed_import_when_product_metadata_is_unavailable(monkeypatch) -> None:
+    monkeypatch.setattr(product_importer, "fetch_page_html", lambda source_url: "<html></html>")
+
+    response = TestClient(app).post(
+        "/api/imports",
+        json={"source_url": "https://retailer.example/products/cropped-utility-jacket"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "failed",
+        "product": {"source_url": "https://retailer.example/products/cropped-utility-jacket"},
     }
 
 
@@ -223,17 +254,17 @@ def test_follows_a_safe_canonical_redirect(monkeypatch) -> None:
         FakeConnection(FakeResponse(200, body=b"<html>product</html>")),
     ]
     monkeypatch.setattr(
-        product_importer,
+        retail_page,
         "resolve_public_hostname",
         lambda source_url: ("retailer.example", "203.0.113.25"),
     )
     monkeypatch.setattr(
-        product_importer,
+        retail_page,
         "make_connection",
         lambda parsed_url, hostname, address: connections.pop(0),
     )
 
-    page_html = product_importer.fetch_page_html("https://retailer.example/product/cropped-utility-jacket")
+    page_html = retail_page.fetch_page_html("https://retailer.example/product/cropped-utility-jacket")
 
     assert page_html == "<html>product</html>"
     assert not connections
@@ -260,15 +291,15 @@ def test_rejects_an_unsafe_redirect_target(monkeypatch) -> None:
             pass
 
     monkeypatch.setattr(
-        product_importer,
+        retail_page,
         "resolve_public_hostname",
         lambda source_url: ("retailer.example", "203.0.113.25"),
     )
     monkeypatch.setattr(
-        product_importer,
+        retail_page,
         "make_connection",
         lambda parsed_url, hostname, address: FakeConnection(),
     )
 
     with pytest.raises(product_importer.InvalidProductUrl):
-        product_importer.fetch_page_html("https://retailer.example/product/cropped-utility-jacket")
+        retail_page.fetch_page_html("https://retailer.example/product/cropped-utility-jacket")
