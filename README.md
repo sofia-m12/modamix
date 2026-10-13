@@ -25,4 +25,12 @@ Backend: `cd backend && python -m venv .venv && source .venv/bin/activate && pip
 
 Frontend: `cd frontend && npm install && npm run dev`
 
+Or start both reload-enabled services together with `docker compose up --build`. Open the app at [localhost:3000](http://localhost:3000); the API health endpoint is at [localhost:8000/health](http://localhost:8000/health).
+
+For the usual local workflow, start the app with Docker Compose and run `make check` before opening a pull request.
+
+## Verify your work
+
+Run `make check` after installing the backend virtual environment and frontend dependencies. It runs the backend test suite, frontend linting, and a production frontend build. Run `make test-e2e` after installing the Playwright Chromium browser with `cd frontend && npx playwright install chromium`.
+
 The initial category is jackets. URL imports are best-effort; unknown product data remains unknown, and image upload is available only as an import-recovery fallback.
