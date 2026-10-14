@@ -1,0 +1,48 @@
+name: Update architecture diagram
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "data/**"
+      - "docker-compose.yml"
+      - "scripts/generate_architecture_diagram.py"
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "data/**"
+      - "docker-compose.yml"
+      - "scripts/generate_architecture_diagram.py"
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  update-diagram:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the changed branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          persist-credentials: true
+
+      - name: Generate the structural Mermaid diagram
+        run: python3 scripts/generate_architecture_diagram.py
+
+      - name: Commit diagram changes when needed
+        run: |
+          if git diff --quiet -- docs/architecture.mmd; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/architecture.mmd
+          git commit -m "docs: update architecture diagram"
+          git push
