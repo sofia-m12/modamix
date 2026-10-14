@@ -15,7 +15,13 @@ Infer the repository from `git remote -v`; `gh` does this automatically when run
 
 ## Pull requests as a triage surface
 
-**PRs as a request surface: no.**
+**PRs as a request surface: limited.**
+
+Pull requests are not the source of product requirements or triage; continue to use
+GitHub Issues for those workflows. PRs may trigger repository-maintenance automation,
+including keeping the project's architecture Mermaid diagram current. Diagram updates
+should be reviewed as part of the pull request and committed to the repository rather
+than treated as a separate specification workflow.
 
 ## When a skill says "publish to the issue tracker"
 
