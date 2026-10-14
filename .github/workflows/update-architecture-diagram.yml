@@ -38,11 +38,11 @@ jobs:
 
       - name: Commit diagram changes when needed
         run: |
-          if git diff --quiet -- docs/architecture.mmd; then
+          if git diff --quiet -- docs/architecture.mmd docs/architecture-diagram.md; then
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/architecture.mmd
+          git add docs/architecture.mmd docs/architecture-diagram.md
           git commit -m "docs: update architecture diagram"
           git push
