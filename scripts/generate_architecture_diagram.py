@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "docs" / "architecture.mmd"
+MARKDOWN_OUTPUT = ROOT / "docs" / "architecture-diagram.md"
 
 
 def python_modules(directory: Path) -> list[str]:
@@ -68,4 +69,15 @@ def generate() -> str:
 
 
 if __name__ == "__main__":
-    OUTPUT.write_text(generate(), encoding="utf-8")
+    diagram = generate()
+    OUTPUT.write_text(diagram, encoding="utf-8")
+    MARKDOWN_OUTPUT.write_text(
+        "# Generated architecture diagram\n\n"
+        "This structural view is generated from the repository layout. "
+        "Do not edit it by hand; run "
+        "`python3 scripts/generate_architecture_diagram.py` instead.\n\n"
+        "```mermaid\n"
+        f"{diagram}"
+        "```\n",
+        encoding="utf-8",
+    )
