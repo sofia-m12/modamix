@@ -16,6 +16,14 @@ ModaMix helps online fashion shoppers find real clothing alternatives that keep 
 
 If the imported image is incorrect, ModaMix retries extraction once using another available image or retrieval path. If it still cannot obtain an image, it shows an honest error or blank state and offers a transient manual-upload fallback. Upload is not a primary entry point, and v1 has no image circling or annotation.
 
+## Current implementation
+
+The first import foundation is complete. ModaMix now validates direct public retail URLs, safely retrieves retailer pages, extracts supported JSON-LD product data, and returns complete, partial, or failed import outcomes with field-level structured-page provenance. The interface previews the imported title and default primary image, and safely explains an outdated backend response instead of crashing.
+
+The development workflow now has a matching safety net: `make check` runs backend tests, frontend linting, and a production build; browser tests cover the successful preview and outdated-response recovery; pull requests run these checks automatically. Docker Compose starts the reload-enabled API and frontend together.
+
+This is foundation work, not completion of the full shopper flow. The imported default image is visible, but a shopper cannot yet select another image, request the one permitted retry, or use the manual-upload recovery path.
+
 ## Catalog and import boundaries
 
 - Initial market: U.S. shoppers and USD-priced products.
@@ -62,8 +70,10 @@ Accounts, saved collections, persistent upload history, live catalog refreshes, 
 
 ## Likely next commits
 
-1. `feat(api): add CORS middleware`
-2. `feat(import): add URL product import flow`
-3. `feat(ui): add imported product confirmation`
-4. `feat(search): rank seed catalog from structured preferences`
-5. `feat(ui): display explained matching results`
+1. `feat(reference): confirm and recover the Reference Image` — let the shopper confirm the imported product and variant, choose another returned image, request one retry for an incorrect image, and use transient manual upload only after image recovery fails.
+2. `feat(preferences): turn a Search Request into editable preferences` — require at least one thing to preserve, change, or exclude; interpret the jacket vocabulary; and let the shopper correct it before search.
+3. `feat(search): rank seed-catalog Candidate Products` — introduce the hand-reviewed U.S./USD jacket catalog and deterministic, provenance-aware matching of up to six results.
+4. `feat(results): handle no Exact Match and retailer handoff` — expose blocked hard constraints, offer one explicit relaxation at a time, and open direct retailer pages in a new tab.
+5. `test(flow): verify the complete ModaMix shopper flow` — extend browser coverage across the full path and add the representative ranking evaluation set.
+
+Independent hardening work can proceed separately: expose shopper-facing cache freshness while finishing the importer refactor, and broaden referral/affiliate URL blocking beyond the initial denylist.
