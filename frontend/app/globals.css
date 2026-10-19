@@ -9,6 +9,7 @@ form, .import-panel { background: #fff; border: 1px solid #e6ddd4; border-radius
 .import-panel > form { border: 0; margin: 0; padding: 0; }
 .import-panel h2 { font-family: Georgia, serif; font-size: 1.75rem; margin-top: 0; }
 label { display: block; font-weight: 700; margin-bottom: 8px; }
+label[for="reference-variant"] { margin-top: 16px; }
 input, textarea { border: 1px solid #cfc4b8; border-radius: 8px; font: inherit; padding: 12px; width: 100%; }
 textarea { min-height: 108px; margin-top: 20px; resize: vertical; }
 button { background: #1f1b18; border: 0; border-radius: 8px; color: white; cursor: pointer; font: inherit; font-weight: 700; margin-top: 16px; padding: 12px 18px; }
@@ -19,10 +20,14 @@ button:disabled { cursor: wait; opacity: .65; }
 .product-preview h3 { font-family: Georgia, serif; font-size: 1.4rem; margin: 6px 0; }
 .product-preview a { color: #8b4b2c; font-weight: 700; }
 .provenance { color: #6c625b; font-size: .9rem; line-height: 1.45; }
+.provenance-details { color: #6c625b; font-size: .9rem; margin: 12px 0; }
+.provenance-details summary { cursor: pointer; font-weight: 700; }
+.provenance-details .provenance { margin: 6px 0 0; }
 .image-options { border: 0; display: flex; flex-wrap: wrap; gap: 10px; grid-column: 1 / -1; margin: 0; padding: 0; }
 .image-options legend { font-weight: 700; margin-bottom: 8px; width: 100%; }
 .image-option { background: transparent; border: 2px solid transparent; margin: 0; padding: 2px; }
 .image-option.is-selected { border-color: #8b4b2c; }
 .image-option img { height: 72px; width: 72px; }
-.reference-actions { grid-column: 1 / -1; }
+.reference-actions { display: flex; flex-wrap: wrap; gap: 12px; grid-column: 1 / -1; }
+.reference-actions button { margin-top: 0; }
 @media (max-width: 520px) { .product-preview { grid-template-columns: 1fr; } }
