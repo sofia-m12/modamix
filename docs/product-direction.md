@@ -14,7 +14,13 @@ ModaMix helps online fashion shoppers find real clothing alternatives that keep 
 6. Filter and rank a curated jacket catalog.
 7. Review real product images, prices, retailer links, freshness, and match explanations.
 
-If the imported image is incorrect, ModaMix retries extraction once using another available image or retrieval path. If it still cannot obtain an image, it shows an honest error or blank state and offers a transient manual-upload fallback. Upload is not a primary entry point, and v1 has no image circling or annotation.
+If none of the imported image options is correct, ModaMix offers "Try another product URL." Reference Image retry and manual image upload are deferred, and upload is not a primary entry point; v1 also has no image circling or annotation.
+
+## Current implementation
+
+The first import foundation is complete. ModaMix now validates direct public retail URLs, safely retrieves retailer pages, extracts supported JSON-LD product data, and returns complete, partial, or failed import outcomes with field-level structured-page provenance. The interface previews the imported title and default primary image, and safely explains an outdated backend response instead of crashing.
+
+The Reference Image confirmation slice is complete: the shopper can correct the title or optional variant, choose from up to four Imported Image Options, explicitly confirm a Reference Image, or start again with an empty Direct Product URL. Search Preferences, ranking, retry, and manual-upload recovery remain later work.
 
 ## Catalog and import boundaries
 
@@ -45,7 +51,8 @@ The shopper must describe at least one Preserved Feature, Requested Change, or E
 - Budget is evaluated against the currently purchasable sale price when one is available; the original price is displayed as context.
 - Each purchasable colorway is a separate Candidate Product when color is known.
 - An imported retailer variant or color is shown with the Reference Image and may be corrected before search when retailer data permits it.
-- When multiple imported product images are available, ModaMix selects the primary image by default and lets the shopper select another before retrying extraction.
+- The shopper can correct the imported title before confirmation. The Reference Variant is an optional, shopper-editable color-or-variant field; its final presentation can be refined during implementation. Shopper Corrections remain distinct from retailer facts.
+- When multiple imported product images are available, ModaMix selects the primary image by default and lets the shopper select another before confirmation.
 - Match explanations distinguish retailer facts from visual inferences.
 - A Candidate Product with unknown evidence for a hard constraint does not qualify as an exact match. This includes unknown logo status for a "no logo" Exclusion and unknown current price for a maximum-price constraint.
 - When no exact match exists, ModaMix presents the blocked requirements and specific, one-at-a-time relaxation choices rather than an empty result page.
@@ -58,12 +65,13 @@ Create a version-controlled set of 10–15 representative jacket requests with e
 
 ## Deferred scope
 
-Accounts, saved collections, persistent upload history, live catalog refreshes, whole-outfit recommendations, broad subjective vibe retrieval, vector search, and opaque AI ranking are deferred.
+Accounts, saved collections, Reference Image retry, manual Reference Image upload, persistent upload history, live catalog refreshes, whole-outfit recommendations, broad subjective vibe retrieval, vector search, and opaque AI ranking are deferred.
 
 ## Likely next commits
 
-1. `feat(api): add CORS middleware`
-2. `feat(import): add URL product import flow`
-3. `feat(ui): add imported product confirmation`
-4. `feat(search): rank seed catalog from structured preferences`
-5. `feat(ui): display explained matching results`
+1. `feat(preferences): turn a Search Request into editable preferences` — require at least one thing to preserve, change, or exclude; interpret the jacket vocabulary; and let the shopper correct it before search.
+2. `feat(search): rank seed-catalog Candidate Products` — introduce the hand-reviewed U.S./USD jacket catalog and deterministic, provenance-aware matching of up to six results.
+3. `feat(results): handle no Exact Match and retailer handoff` — expose blocked hard constraints, offer one explicit relaxation at a time, and open direct retailer pages in a new tab.
+4. `test(flow): verify the complete ModaMix shopper flow` — extend browser coverage across the full path and add the representative ranking evaluation set.
+
+Independent hardening work can proceed separately: expose shopper-facing cache freshness while finishing the importer refactor, and broaden referral/affiliate URL blocking beyond the initial denylist.

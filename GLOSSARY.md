@@ -12,9 +12,21 @@ _Avoid_: Source product, original item, input product
 The product image confirmed by the shopper as representing the Reference Product.
 _Avoid_: Uploaded image, source image, target image
 
+**Reference Image Confirmation**:
+The shopper's explicit acceptance of one imported image as the Reference Image before describing matching preferences.
+_Avoid_: Preview, passive display, implicit confirmation
+
+**Imported Image Option**:
+One of up to four retailer images returned for a Reference Product before the shopper confirms a Reference Image.
+_Avoid_: Reference Image, image gallery, thumbnail
+
 **Reference Variant**:
 The color or style version of a Reference Product that ModaMix imports and presents for shopper confirmation.
 _Avoid_: Default variant, source color
+
+**Shopper Correction**:
+A shopper-provided replacement for an imported Reference Product title or Reference Variant, kept distinct from the retailer-provided value.
+_Avoid_: Overwritten retailer fact, inferred correction
 
 **Import**:
 The best-effort retrieval of a Reference Product's retailer information and product images from its public URL.
